@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <title>Contacts API Manager | Manage contacts for api dev api requests</title>
+</head>
+
+<body>
+    <!--Navbar-->
+    <nav>
+        <div class="nav-wrapper blue">
+            <div class="container">
+                <a href="#" class="brand-logo left">Contacts Manager</a>
+
+            </div>
+        </div>
+    </nav>
+    <br>
+
+    <div class="container">
+        <!--Form Card-->
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title ">Contact Details
+                    <button class="clear-btn btn blue lighten-3"><i class="fa fa-edit"></i> Clear ALl</button></span>
+                <form class="col">
+                    <div class="row">
+                        <div class="input-field col s4">
+                            <input type="text" id="contact-firstname" placeholder="Enter First Name">
+                            <label for="firstname">First Name</label>
+                        </div>
+                        <div class="input-field col s4">
+                            <input type="text" id="contact-lastname" placeholder="Enter Last Name">
+                            <label for="lastname">Last Name</label>
+                        </div>
+                        <div class="input-field col s4">
+                            <label for="status">
+                                <input type="checkbox" class="filled-in" id="status" checked value="1" />
+                                <span>Make Public ?</span>
+                            </label>
+                        </div>
+                    </div> <br>
+                    <div class="row">
+                        <div class="col s6">
+                            <button class="add-btn btn blue darken-3"><i class="fa fa-plus"></i> Add Contact</button>
+                            <button class="update-btn btn orange mb3"><i class="fa fa-pencil-square-o"></i> Update
+                                Contact</button>
+                            <button class="delete-btn btn red mt3"><i class="fa fa-remove"></i> Delete Contact</button>
+                        </div>
+                        <div class="col s6">
+                            <button class="back-btn btn gray pull-right"><i class="fa fa-chevron-circle-left"></i>
+                                Back</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!--Calorie Count-->
+        <h4 class="center-align ">Total Contacts: <span class="contacts-count">0</span></h4>
+        <!--contact list-->
+
+        <ul id="contact-list" class="collection">
+
+        </ul>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.4.1.js"
+        integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <!-- <script src="HTTP.js"></script>
+    <script src="app.js"></script> -->
+    <script type="text/javascript">
+        $(document).ready(function () {
+            /******Initialisations******/
+            const UISelectors = {
+                contactList: '#contact-list',
+                addBtn: '.add-btn',
+                updateBtn: '.update-btn',
+                deleteBtn: '.delete-btn',
+                backBtn: '.back-btn',
+                clearAllBtn: '.clear-btn',
+                contactFirstnameInput: '#contact-firstname',
+                contactLastnameInput: '#contact-lastname',
+                statusInput: '#status',
+                contactCount: '.contacts-count',
+                listcontacts: '#contact-list li',
+            }
+            let contactCount = 0;
+            let contactsList = null;
+            let currentContact = null;
+            M.toast({
+                html: ` <strong>Initializing App...</strong><br>`,
+                classes: 'white-text teal lighten-3'
+            });
+            clearFormState();
+            getContacts();
+            Navigator.
+
+            /******End of Initialisations******/
+
+
+            /******Event Calls******/
+
+            //Submit new contact
+            document.querySelector(UISelectors.addBtn).addEventListener('click', addNewContact);
+            //Update Exiting contact
+            document.querySelector(UISelectors.updateBtn).addEventListener('click', updateExistingContact);
+            //Delete Exiting contact
+            document.querySelector(UISelectors.deleteBtn).addEventListener('click', deleteExistingContact);
+            //Clear form data
+            document.querySelector(UISelectors.clearAllBtn).addEventListener('click', clearInputClick);
+            //Update Contact
+            document.querySelector(UISelectors.contactList).addEventListener('click', updateContactData);
+            // Back btn event
+            document.querySelector(UISelectors.backBtn).addEventListener('click', function (e) {
+                M.toast({
+                    html: 'Resetting form state...',
+                    classes: 'white-text blue lighten-3'
+                });
+                clearFormState();
+                M.toast({
+                    html: 'Form reset complete.',
+                    classes: 'white-text blue lighten-3'
+                });
+                e.preventDefault()
+            });
+
+            /******End of Event Calls******/
+
+            /******Functions******/
+
+            function clearFormState() {
+                clearInput();
+                currentContact = null;
+                // Hide update and delete btns
+                document.querySelector(UISelectors.updateBtn).style.display = 'none';
+                document.querySelector(UISelectors.deleteBtn).style.display = 'none';
+                document.querySelector(UISelectors.backBtn).style.display = 'none';
+                document.querySelector(UISelectors.addBtn).style.display = 'inline';
+            }
+
+            function clearInputClick(e) {
+                clearInput();
+                e.preventDefault();
+            }
+
+            function clearInput() {
+                M.toast({
+                    html: 'Clearing Inputs...',
+                    classes: 'white-text blue lighten-3'
+                });
+                document.querySelector(UISelectors.contactFirstnameInput).value = '';
+                document.querySelector(UISelectors.contactLastnameInput).value = '';
+                document.querySelector(UISelectors.statusInput).checked = false;
+            }
+
+            function showFormState() {
+                document.querySelector(UISelectors.updateBtn).style.display = 'inline';
+                document.querySelector(UISelectors.deleteBtn).style.display = 'inline';
+                document.querySelector(UISelectors.backBtn).style.display = 'inline';
+                document.querySelector(UISelectors.addBtn).style.display = 'none';
+            }
+
+            function getContacts() {
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/api/contacts'
+                }).done(function (contacts) {
+                    M.toast({
+                        html: contacts.length + ' Contacts Fetched',
+                        classes: 'white-text blue lighten-3'
+                    });
+
+                    contactsList = contacts;
+                    contactCount = contacts.length;
+                    setContactCount(contactCount);
+
+                    addContactsToUI(contacts);
+                })
+            }
+
+            function setContactCount(count) {
+                document.querySelector(UISelectors.contactCount).textContent = count;
+            }
+
+            function addContactsToUI(contacts) {
+                let output = '';
+                $.each(contacts, function (key, contact) {
+                    let status = 'Private';
+                    if (contact.status) {
+                        status = 'Public';
+                    }
+                    output += `
+                <li class="collection-item" id="contact-${contact.id}">
+                    <strong>${contact.firstname} ${contact.lastname}: </strong><em>${status}
+                        Contact</em>
+                    <a href="#" class="secondary-content">
+                        <i class="fa fa-pencil edit-contact"></i>
+                    </a>
+                </li>
+                `;
+                    const contactsList = document.querySelector(UISelectors.contactList);
+
+                    const initUlNodesLength = contactsList.childNodes.length;
+                    contactsList.innerHTML = output;
+                    // let contactNodes = ((contactsList.childNodes.length - 1) / 2);
+
+                    // if (contactNodes <= initUlNodesLength) {
+                    //     console.log(`(${contactNodes}) li contacts inserted to UI`);
+                    // } else {
+                    //     console.error('No insert to UI');
+                    // }
+                })
+            }
+
+            function getContactInput() {
+                return {
+                    firstname: document.querySelector(UISelectors.contactFirstnameInput).value,
+                    lastname: document.querySelector(UISelectors.contactLastnameInput).value,
+                }
+            }
+
+            function addNewContact(e) {
+                let input = getContactInput();
+                let status = 0;
+
+                if (document.querySelector(UISelectors.statusInput).checked) {
+                    status = 1;
+                }
+                if (input.firstname !== '' || input.lastname !==
+                    '') {
+                    //submit to API
+                    M.toast({
+                        html: 'Submitting new contact to API...',
+                        classes: 'white-text blue lighten-3'
+                    });
+                    let newContactResponse = sendNewContactValuesToAPI(input.firstname, input.lastname, status);
+                    clearInput();
+                    let contactData = newContactResponse.data;
+                    M.toast({
+                        html: ` <strong>Contact Saved</strong><br>`,
+                        classes: 'white-text green lighten-3'
+                    });
+
+                    //Fetch updated contacts from API
+                    getContacts();
+
+
+                } else {
+                    M.toast({
+                        html: ` <strong>Please Check input fields. Both Firstname and Lastname Value needed</strong><br>`,
+                        classes: 'white-text red lighten-3'
+                    });
+                }
+
+                e.preventDefault();
+            }
+
+            function sendNewContactValuesToAPI(firstname, lastname, status) {
+                console.log('API Async function processing POST request');
+                console.log(firstname, lastname, status);
+                const responseData = {
+                    data: {},
+                    status: null,
+                    message: ""
+                };
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/api/contacts',
+                    method: 'POST',
+                    data: {
+                        firstname: firstname,
+                        lastname: lastname,
+                        status: status
+                    }
+                }).done(function (response) {
+                    responseData.data = response.data;
+                    responseData.status = response.status;
+                    responseData.message = response.message;
+                })
+
+                return responseData;
+            }
+
+            function updateExistingContact(e) {
+                let input = getContactInput();
+                let status = 0;
+
+                if (document.querySelector(UISelectors.statusInput).checked) {
+                    status = 1;
+                }
+                if (input.firstname !== '' || input.lastname !==
+                    '') {
+                    //get current contact ID
+                    let currentContactId = currentContact.id;
+                    //submit to API
+                    console.log('Submitting updated contact to API...');
+
+                    let updatedContactResponse = sendUpdatedContactValuesToAPI(input.firstname, input.lastname,
+                        status, currentContactId);
+                    M.toast({
+                        html: ` <strong>Contact Updated</strong><br>`,
+                        classes: 'white-text green lighten-3'
+                    });
+
+                    //Fetch updated contacts from API
+                    getContacts();
+
+                } else {
+                    M.toast({
+                        html: ` <strong>Please Check input fields. Both Firstname and Lastname Value needed</strong><br>`,
+                        classes: 'white-text red lighten-3'
+                    });
+                }
+
+
+                e.preventDefault()
+            }
+
+            function sendUpdatedContactValuesToAPI(firstname, lastname, status, id) {
+                console.log('API Async function processing POST request');
+                // console.log(firstname, lastname, status, id);
+                const responseData = {
+                    data: {},
+                    status: null,
+                    message: "",
+                };
+                $.ajax({
+                    url: `http://127.0.0.1:8000/api/contacts/${id}`,
+                    method: 'POST',
+                    data: {
+                        firstname: firstname,
+                        lastname: lastname,
+                        status: status,
+                        _method: "PUT"
+                    }
+                }).done(function (response) {
+                    responseData.data = response.data;
+                    responseData.message = response.message;
+                    responseData.status = response.status;
+                })
+
+                return responseData;
+            }
+
+            function deleteExistingContact(e) {
+                let input = getContactInput();
+                let status = 0;
+                if (currentContact.id) {
+                    //get current contact ID
+                    let currentContactId = currentContact.id;
+                    //submit to API
+                    console.log('Submitting delete contact request to API...');
+
+                    let deleteContactResponse = sendDeleteContactValuesToAPI(currentContactId);
+                    console.log(deleteContactResponse);
+                    M.toast({
+                        html: ` <strong>Contact Deleted</strong><br>`,
+                        classes: 'white-text green lighten-2'
+                    });
+
+                    //Fetch updated contacts from API
+                    getContacts();
+
+                } else {
+                    M.toast({
+                        html: ` <strong>Please Check input fields. Current contact ID not set</strong><br>`,
+                        classes: 'white-text red lighten-3'
+                    });
+                }
+
+
+                e.preventDefault()
+            }
+
+            function sendDeleteContactValuesToAPI(id) {
+                console.log('API Async function processing POST request');
+                // console.log(firstname, lastname, status, id);
+                const responseData = {
+                    data: {},
+                    status: null,
+                    message: ""
+                };
+                $.ajax({
+                    url: `http://127.0.0.1:8000/api/contacts/${id}`,
+                    method: 'POST',
+                    data: {
+                        _method: "DELETE"
+                    }
+                }).done(function (response) {
+                    responseData.data = response.data;
+                    responseData.status = response.status;
+                    responseData.message = response.message;
+                })
+
+                return responseData;
+            }
+
+            function updateContactData(e) {
+                //console.log(e.target.parentElement.parentElement);
+                let parentElement = e.target.parentElement.parentElement;
+                let splitParentElementId = parentElement.id.split('-');
+                let contactId = splitParentElementId[1];
+
+                contactToUpdate = setCurrentContact(parseInt(contactId));
+
+                addCurrentContactToUI(contactToUpdate);
+                showFormState();
+
+                e.preventDefault()
+            }
+
+            function setCurrentContact(id) {
+                let contactWithId = null
+                contactsList.forEach(function (contact) {
+                    if (contact.id === id) {
+                        contactWithId = contact;
+                        currentContact = contact;
+                    }
+                });
+
+                return contactWithId;
+            }
+
+            function addCurrentContactToUI(contact) {
+                document.querySelector(UISelectors.contactFirstnameInput).value = contact.firstname;
+                document.querySelector(UISelectors.contactLastnameInput).value = contact.lastname;
+                if (contact.status === 1) {
+                    document.querySelector(UISelectors.statusInput).checked = true;
+                } else {
+                    document.querySelector(UISelectors.statusInput).checked = false;
+                }
+            }
+
+
+        })
+    </script>
+</body>
+
+</html>
